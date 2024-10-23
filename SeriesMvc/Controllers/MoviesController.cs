@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using SeriesMvc.Data;
 using SeriesMvc.Models;
 
+
 namespace SeriesMvc.Controllers
 {
     public class MoviesController : Controller
@@ -20,9 +21,40 @@ namespace SeriesMvc.Controllers
         }
 
         // GET: Movies
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string movieActor, string movieCategory, string searchString)
         {
-            return View(await _context.Movie.ToListAsync());
+            // Tüm filmleri, aktörler ve kategorilerle birlikte çek
+            var movies = await _context.Movie
+                .Include(m => m.MovieActors).ThenInclude(ma => ma.Actor)
+                .Include(m => m.MovieCategories).ThenInclude(mc => mc.Category)
+                .ToListAsync();
+
+            // Filtreleri uygula
+            if (!string.IsNullOrEmpty(movieActor))
+            {
+                movies = movies.Where(m => m.MovieActors.Any(ma => ma.Actor.Name == movieActor)).ToList();
+            }
+
+            if (!string.IsNullOrEmpty(movieCategory))
+            {
+                movies = movies.Where(m => m.MovieCategories.Any(mc => mc.Category.Name == movieCategory)).ToList();
+            }
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                movies = movies.Where(s => s.Title!.ToUpper().Contains(searchString.ToUpper())).ToList();
+            }
+
+            // ViewModel oluştur
+            var movieViewModels = movies.Select(movie => new MovieActorCategoryViewModel
+            {
+                MovieId = movie.MovieId,
+                Title = movie.Title,
+                Actors = movie.MovieActors.Select(ma => ma.Actor.Name).ToList(),
+                Categories = movie.MovieCategories.Select(mc => mc.Category.Name).ToList()
+            }).ToList();
+
+            return View(movieViewModels);
         }
 
         // GET: Movies/Details/5
@@ -54,15 +86,71 @@ namespace SeriesMvc.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("MovieId,Title")] Movie movie)
+        public async Task<IActionResult> Create(MovieActorCategoryViewModel model)
         {
-            if (ModelState.IsValid)
+            var movie = await _context.Movie.FirstOrDefaultAsync(m => m.Title == model.Title);
+
+            if (movie == null)
             {
-                _context.Add(movie);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                movie = new Movie { Title = model.Title };
+                _context.Movie.Add(movie);
             }
-            return View(movie);
+
+            foreach (var actorNames in model.Actors)
+            {
+                var actorList = actorNames.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var actorName in actorList)
+                {
+                    var trimmedActorName = actorName.Trim();
+
+                    var actor = await _context.Actor.FirstOrDefaultAsync(a => a.Name == trimmedActorName);
+                    if (actor == null)
+                    {
+                        actor = new Actor { Name = trimmedActorName };
+                        _context.Actor.Add(actor);
+                    }
+
+                    if (!_context.MovieActor.Any(ma => ma.MovieId == movie.MovieId && ma.ActorId == actor.ActorId))
+                    {
+                        _context.MovieActor.Add(new MovieActor
+                        {
+                            Movie = movie,
+                            Actor = actor
+                        });
+                    }
+                }
+            }
+
+            foreach (var categoryNames in model.Categories)
+            {
+                var categoryList = categoryNames.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var categoryName in categoryList)
+                {
+                    var trimmedcategoryName = categoryName.Trim();
+
+                    var category = await _context.Category.FirstOrDefaultAsync(a => a.Name == trimmedcategoryName);
+                    if (category == null)
+                    {
+                        category = new Category { Name = trimmedcategoryName };
+                        _context.Category.Add(category);
+                    }
+
+                    if (!_context.MovieCategory.Any(mc => mc.MovieId == movie.MovieId && mc.CategoryId == category.CategoryId))
+                    {
+                        _context.MovieCategory.Add(new MovieCategory
+                        {
+                            Movie = movie,
+                            Category = category
+                        });
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Movies/Edit/5

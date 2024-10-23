@@ -8,6 +8,28 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\coreui\**" />
+    <Compile Remove="wwwroot\lib\coreui-free-bootstrap-admin-template-main\**" />
+    <Content Remove="wwwroot\coreui\**" />
+    <Content Remove="wwwroot\lib\coreui-free-bootstrap-admin-template-main\**" />
+    <EmbeddedResource Remove="wwwroot\coreui\**" />
+    <EmbeddedResource Remove="wwwroot\lib\coreui-free-bootstrap-admin-template-main\**" />
+    <None Remove="wwwroot\coreui\**" />
+    <None Remove="wwwroot\lib\coreui-free-bootstrap-admin-template-main\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\lib\coreui\.github\CONTRIBUTING.md" />
+    <None Include="wwwroot\lib\coreui\.github\FUNDING.yml" />
+    <None Include="wwwroot\lib\coreui\.github\ISSUE_TEMPLATE.md" />
+    <None Include="wwwroot\lib\coreui\.github\ISSUE_TEMPLATE\bug_report.md" />
+    <None Include="wwwroot\lib\coreui\.github\ISSUE_TEMPLATE\config.yml" />
+    <None Include="wwwroot\lib\coreui\.github\ISSUE_TEMPLATE\feature_request.md" />
+    <None Include="wwwroot\lib\coreui\.github\stale.yml" />
+    <None Include="wwwroot\lib\coreui\.github\SUPPORT.md" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.10" />

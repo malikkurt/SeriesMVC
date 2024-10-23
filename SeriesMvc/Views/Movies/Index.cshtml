@@ -1,4 +1,4 @@
-﻿@model IEnumerable<SeriesMvc.Models.Movie>
+﻿@model IEnumerable<SeriesMvc.Models.MovieActorCategoryViewModel>
 
 @{
     ViewData["Title"] = "Index";
@@ -9,27 +9,56 @@
 <p>
     <a asp-action="Create">Create New</a>
 </p>
-<table class="table">
+<form asp-controller="Movies" asp-action="Index" method="get">
+    <select name="movieActor">
+        <option value="">Oyuncu Seç</option>
+        @foreach (var actor in Model.SelectMany(m => m.Actors).Distinct())
+        {
+            <option value="@actor">@actor</option>
+        }
+    </select>
+
+    <select name="movieCategory">
+        <option value="">Kategori Seç</option>
+        @foreach (var category in Model.SelectMany(m => m.Categories).Distinct())
+        {
+            <option value="@category">@category</option>
+        }
+    </select>
+
+    <input type="text" name="searchString" placeholder="Başlık Ara" />
+    <input type="submit" value="Filtrele" />
+</form>
+
+<form asp-controller="Movies" asp-action="Index" method="get" style="text-align:center;">
+    <input type="hidden" name="movieActor" value="" />
+    <input type="hidden" name="movieCategory" value="" />
+    <input type="hidden" name="searchString" value="" />
+    <input type="submit" value="Filtreleri temizle" />
+</form>
+
+<table>
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Title)
-            </th>
-            <th></th>
+            <th>Film Başlığı</th>
+            <th>Oyuncular</th>
+            <th>Kategoriler</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.MovieId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.MovieId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.MovieId">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var movie in Model)
+        {
+            <tr>
+                <td>@movie.Title</td>
+                <td>@string.Join(", ", movie.Actors)</td>
+                <td>@string.Join(", ", movie.Categories)</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@movie.MovieId">Düzenle</a> |
+                    <a asp-action="Details" asp-route-id="@movie.MovieId">Detaylar</a> |
+                    <a asp-action="Delete" asp-route-id="@movie.MovieId">Sil</a>
+                </td>
+
+            </tr>
+        }
     </tbody>
 </table>
