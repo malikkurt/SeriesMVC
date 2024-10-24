@@ -64,16 +64,28 @@ namespace SeriesMvc.Controllers
             {
                 return NotFound();
             }
-            
+
             var movie = await _context.Movie
+                .Include(m => m.MovieActors).ThenInclude(ma => ma.Actor)
+                .Include(m => m.MovieCategories).ThenInclude(mc => mc.Category)
                 .FirstOrDefaultAsync(m => m.MovieId == id);
+
             if (movie == null)
             {
                 return NotFound();
             }
 
-            return View(movie);
+            var movieViewModel = new MovieActorCategoryViewModel
+            {
+                MovieId = movie.MovieId,
+                Title = movie.Title,
+                Actors = movie.MovieActors.Select(ma => ma.Actor.Name).ToList(),
+                Categories = movie.MovieCategories.Select(mc => mc.Category.Name).ToList()
+            };
+
+            return View(movieViewModel);
         }
+
 
         // GET: Movies/Create
         public IActionResult Create()

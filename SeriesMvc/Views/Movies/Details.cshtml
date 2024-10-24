@@ -10,27 +10,53 @@
     <h4>Movie</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Title)
         </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        @* <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Actors)
-        </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Actors)
+            @Model.Title
         </dd>
+
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Categories)
+            @Html.DisplayName("Actors")
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Categories)
-        </dd> *@
+            @if (Model.Actors != null && Model.Actors.Any())
+            {
+                <ul>
+                    @foreach (var actor in Model.Actors)
+                    {
+                        <li>@actor</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <span>No actors available</span>
+            }
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayName("Categories")
+        </dt>
+        <dd class="col-sm-10">
+            @if (Model.Categories != null && Model.Categories.Any())
+            {
+                <ul>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <li>@category</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <span>No categories available</span>
+            }
+        </dd>
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.MovieId">Edit</a> |
+    <a asp-action="Edit" asp-route-id="@Model.MovieId">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>

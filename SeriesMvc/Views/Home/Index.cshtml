@@ -6,30 +6,6 @@
 @inject UserManager<IdentityUser> UserManager
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    @if (SignInManager.IsSignedIn(User))
-    {
-        <button>
-            <a asp-controller="Movies" asp-action="Create">Yeni Film</a>
-        </button>
-        <button>
-            <a asp-controller="Movies" asp-action="Index">Filmler</a>
-        </button>
-        <button>
-            <a asp-controller="Actors" asp-action="Index">Oyuncular</a>
-        </button>
-        <button>
-            <a asp-controller="Categories" asp-action="Index">Kategoriler</a>
-        </button>
-    }
-    else
-    {
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Register</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
-        </li>
-    }
+    <h1 class="display-4">Filmler</h1>
 </div>
 
