@@ -166,6 +166,7 @@ namespace SeriesMvc.Controllers
         }
 
         // GET: Movies/Edit/5
+        // GET: Movies/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -173,47 +174,98 @@ namespace SeriesMvc.Controllers
                 return NotFound();
             }
 
-            var movie = await _context.Movie.FindAsync(id);
+            var movie = await _context.Movie
+                .Include(m => m.MovieActors).ThenInclude(ma => ma.Actor)
+                .Include(m => m.MovieCategories).ThenInclude(mc => mc.Category)
+                .FirstOrDefaultAsync(m => m.MovieId == id);
+
             if (movie == null)
             {
                 return NotFound();
             }
-            return View(movie);
+
+            var movieViewModel = new MovieActorCategoryViewModel
+            {
+                MovieId = movie.MovieId,
+                Title = movie.Title,
+                Actors = movie.MovieActors.Select(ma => ma.Actor.Name).ToList(),
+                Categories = movie.MovieCategories.Select(mc => mc.Category.Name).ToList()
+            };
+
+            return View(movieViewModel);
         }
+
 
         // POST: Movies/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("MovieId,Title")] Movie movie)
+        public async Task<IActionResult> Edit(int id, MovieActorCategoryViewModel model)
         {
-            if (id != movie.MovieId)
+            if (id != model.MovieId)
             {
                 return NotFound();
             }
 
             if (ModelState.IsValid)
             {
-                try
+                var movie = await _context.Movie
+                    .Include(m => m.MovieActors)
+                    .Include(m => m.MovieCategories)
+                    .FirstOrDefaultAsync(m => m.MovieId == id);
+
+                if (movie == null)
                 {
-                    _context.Update(movie);
-                    await _context.SaveChangesAsync();
+                    return NotFound();
                 }
-                catch (DbUpdateConcurrencyException)
+
+                movie.Title = model.Title;
+
+                
+                movie.MovieActors.Clear(); 
+                foreach (var actorName in model.Actors)
                 {
-                    if (!MovieExists(movie.MovieId))
+                    var trimmedActorName = actorName.Trim();
+
+                    var actor = await _context.Actor.FirstOrDefaultAsync(a => a.Name == trimmedActorName);
+                    if (actor == null)
                     {
-                        return NotFound();
+                        actor = new Actor { Name = trimmedActorName };
+                        _context.Actor.Add(actor);
                     }
-                    else
+
+                    movie.MovieActors.Add(new MovieActor
                     {
-                        throw;
-                    }
+                        Movie = movie,
+                        Actor = actor
+                    });
                 }
+
+                movie.MovieCategories.Clear(); 
+                foreach (var categoryName in model.Categories)
+                {
+                    var trimmedCategoryName = categoryName.Trim();
+
+                    var category = await _context.Category.FirstOrDefaultAsync(c => c.Name == trimmedCategoryName);
+                    if (category == null)
+                    {
+                        category = new Category { Name = trimmedCategoryName };
+                        _context.Category.Add(category);
+                    }
+
+                    movie.MovieCategories.Add(new MovieCategory
+                    {
+                        Movie = movie,
+                        Category = category
+                    });
+                }
+
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(movie);
+
+            return View(model);
         }
 
         // GET: Movies/Delete/5
