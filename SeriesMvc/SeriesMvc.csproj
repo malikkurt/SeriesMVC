@@ -19,6 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="wwwroot\AdminLTE-3.0.4\.github\ISSUE_TEMPLATE\bug-report-for-adminlte-v2-4-x.md" />
+    <None Include="wwwroot\AdminLTE-3.0.4\.github\ISSUE_TEMPLATE\bug-report-for-adminlte-v3-x.md" />
+    <None Include="wwwroot\AdminLTE-3.0.4\.github\ISSUE_TEMPLATE\feature-request-for-adminlte-v3-x.md" />
     <None Include="wwwroot\lib\coreui\.github\CONTRIBUTING.md" />
     <None Include="wwwroot\lib\coreui\.github\FUNDING.yml" />
     <None Include="wwwroot\lib\coreui\.github\ISSUE_TEMPLATE.md" />

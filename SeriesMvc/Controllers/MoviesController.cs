@@ -64,7 +64,7 @@ namespace SeriesMvc.Controllers
             {
                 return NotFound();
             }
-
+            
             var movie = await _context.Movie
                 .FirstOrDefaultAsync(m => m.MovieId == id);
             if (movie == null)
