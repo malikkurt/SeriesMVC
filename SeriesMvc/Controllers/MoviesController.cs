@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SeriesMvc.Data;
 using SeriesMvc.Models;
+using SeriesMvc.Services;
 
 
 namespace SeriesMvc.Controllers
@@ -14,22 +15,30 @@ namespace SeriesMvc.Controllers
     public class MoviesController : Controller
     {
         private readonly SeriesMvcContext _context;
+        private readonly ICacheService _cacheService;
 
-        public MoviesController(SeriesMvcContext context)
+        public MoviesController(SeriesMvcContext context, ICacheService cacheService)
         {
             _context = context;
+            _cacheService = cacheService;
         }
 
         // GET: Movies
         public async Task<IActionResult> Index(string movieActor, string movieCategory, string searchString)
         {
-            // Tüm filmleri, aktörler ve kategorilerle birlikte çek
+            var cacheKey = $"movies_{movieActor}_{movieCategory}_{searchString}"; // Cache anahtarı
+            var cachedMovies = await _cacheService.GetAsync<List<MovieActorCategoryViewModel>>(cacheKey);
+
+            if (cachedMovies != null)
+            {
+                return View(cachedMovies);
+            }
+
             var movies = await _context.Movie
                 .Include(m => m.MovieActors).ThenInclude(ma => ma.Actor)
                 .Include(m => m.MovieCategories).ThenInclude(mc => mc.Category)
                 .ToListAsync();
 
-            // Filtreleri uygula
             if (!string.IsNullOrEmpty(movieActor))
             {
                 movies = movies.Where(m => m.MovieActors.Any(ma => ma.Actor.Name == movieActor)).ToList();
@@ -45,7 +54,6 @@ namespace SeriesMvc.Controllers
                 movies = movies.Where(s => s.Title!.ToUpper().Contains(searchString.ToUpper())).ToList();
             }
 
-            // ViewModel oluştur
             var movieViewModels = movies.Select(movie => new MovieActorCategoryViewModel
             {
                 MovieId = movie.MovieId,
@@ -53,6 +61,8 @@ namespace SeriesMvc.Controllers
                 Actors = movie.MovieActors.Select(ma => ma.Actor.Name).ToList(),
                 Categories = movie.MovieCategories.Select(mc => mc.Category.Name).ToList()
             }).ToList();
+
+            await _cacheService.SetAsync(cacheKey, movieViewModels, TimeSpan.FromMinutes(3)); // Cache'e ekleme
 
             return View(movieViewModels);
         }
