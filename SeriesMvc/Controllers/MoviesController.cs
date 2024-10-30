@@ -15,22 +15,31 @@ namespace SeriesMvc.Controllers
     public class MoviesController : Controller
     {
         private readonly SeriesMvcContext _context;
+
         private readonly ICacheService _cacheService;
 
-        public MoviesController(SeriesMvcContext context, ICacheService cacheService)
+        private readonly ILogger<MoviesController> _logger;
+
+
+        public MoviesController(SeriesMvcContext context, ICacheService cacheService, ILogger<MoviesController> logger)
         {
             _context = context;
             _cacheService = cacheService;
+            _logger = logger;
         }
 
         // GET: Movies
         public async Task<IActionResult> Index(string movieActor, string movieCategory, string searchString)
         {
-            var cacheKey = $"movies_{movieActor}_{movieCategory}_{searchString}"; // Cache anahtarı
+
+            _logger.LogInformation("Movies Index action called with parameters: actor={actor}, category={category}, search={search}", movieActor, movieCategory, searchString);
+
+            var cacheKey = $"movies_{movieActor}_{movieCategory}_{searchString}";
             var cachedMovies = await _cacheService.GetAsync<List<MovieActorCategoryViewModel>>(cacheKey);
 
             if (cachedMovies != null)
             {
+                _logger.LogInformation("Movies fetched from cache with key {cacheKey}", cacheKey);
                 return View(cachedMovies);
             }
 
@@ -39,18 +48,22 @@ namespace SeriesMvc.Controllers
                 .Include(m => m.MovieCategories).ThenInclude(mc => mc.Category)
                 .ToListAsync();
 
+            // Loglama detayları
             if (!string.IsNullOrEmpty(movieActor))
             {
+                _logger.LogInformation("Filtering movies by actor: {actor}", movieActor);
                 movies = movies.Where(m => m.MovieActors.Any(ma => ma.Actor.Name == movieActor)).ToList();
             }
 
             if (!string.IsNullOrEmpty(movieCategory))
             {
+                _logger.LogInformation("Filtering movies by category: {category}", movieCategory);
                 movies = movies.Where(m => m.MovieCategories.Any(mc => mc.Category.Name == movieCategory)).ToList();
             }
 
             if (!string.IsNullOrEmpty(searchString))
             {
+                _logger.LogInformation("Filtering movies by search string: {search}", searchString);
                 movies = movies.Where(s => s.Title!.ToUpper().Contains(searchString.ToUpper())).ToList();
             }
 
@@ -62,7 +75,8 @@ namespace SeriesMvc.Controllers
                 Categories = movie.MovieCategories.Select(mc => mc.Category.Name).ToList()
             }).ToList();
 
-            await _cacheService.SetAsync(cacheKey, movieViewModels, TimeSpan.FromMinutes(3)); // Cache'e ekleme
+            await _cacheService.SetAsync(cacheKey, movieViewModels, TimeSpan.FromMinutes(3));
+            _logger.LogInformation("Movies stored in cache with key {cacheKey}", cacheKey);
 
             return View(movieViewModels);
         }
@@ -110,12 +124,19 @@ namespace SeriesMvc.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(MovieActorCategoryViewModel model)
         {
+            _logger.LogInformation("Create action called with movie title: {title}", model.Title);
+
             var movie = await _context.Movie.FirstOrDefaultAsync(m => m.Title == model.Title);
 
             if (movie == null)
             {
+                _logger.LogInformation("Movie not found, creating new movie with title: {title}", model.Title);
                 movie = new Movie { Title = model.Title };
                 _context.Movie.Add(movie);
+            }
+            else
+            {
+                _logger.LogWarning("Movie with title '{title}' already exists.", model.Title);
             }
 
             foreach (var actorNames in model.Actors)
@@ -129,8 +150,13 @@ namespace SeriesMvc.Controllers
                     var actor = await _context.Actor.FirstOrDefaultAsync(a => a.Name == trimmedActorName);
                     if (actor == null)
                     {
+                        _logger.LogInformation("Actor '{actorName}' not found, creating new actor.", trimmedActorName);
                         actor = new Actor { Name = trimmedActorName };
                         _context.Actor.Add(actor);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Actor '{actorName}' found.", trimmedActorName);
                     }
 
                     if (!_context.MovieActor.Any(ma => ma.MovieId == movie.MovieId && ma.ActorId == actor.ActorId))
@@ -140,6 +166,11 @@ namespace SeriesMvc.Controllers
                             Movie = movie,
                             Actor = actor
                         });
+                        _logger.LogInformation("Actor '{actorName}' added to movie '{title}'.", trimmedActorName, model.Title);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Actor '{actorName}' is already associated with movie '{title}'.", trimmedActorName, model.Title);
                     }
                 }
             }
@@ -150,13 +181,18 @@ namespace SeriesMvc.Controllers
 
                 foreach (var categoryName in categoryList)
                 {
-                    var trimmedcategoryName = categoryName.Trim();
+                    var trimmedCategoryName = categoryName.Trim();
 
-                    var category = await _context.Category.FirstOrDefaultAsync(a => a.Name == trimmedcategoryName);
+                    var category = await _context.Category.FirstOrDefaultAsync(a => a.Name == trimmedCategoryName);
                     if (category == null)
                     {
-                        category = new Category { Name = trimmedcategoryName };
+                        _logger.LogInformation("Category '{categoryName}' not found, creating new category.", trimmedCategoryName);
+                        category = new Category { Name = trimmedCategoryName };
                         _context.Category.Add(category);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Category '{categoryName}' found.", trimmedCategoryName);
                     }
 
                     if (!_context.MovieCategory.Any(mc => mc.MovieId == movie.MovieId && mc.CategoryId == category.CategoryId))
@@ -166,11 +202,17 @@ namespace SeriesMvc.Controllers
                             Movie = movie,
                             Category = category
                         });
+                        _logger.LogInformation("Category '{categoryName}' added to movie '{title}'.", trimmedCategoryName, model.Title);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Category '{categoryName}' is already associated with movie '{title}'.", trimmedCategoryName, model.Title);
                     }
                 }
             }
 
             await _context.SaveChangesAsync();
+            _logger.LogInformation("Movie '{title}' created successfully with associated actors and categories.", model.Title);
 
             return RedirectToAction(nameof(Index));
         }
