@@ -20,7 +20,6 @@ namespace SeriesMvc.Controllers
 
         private readonly ILogger<MoviesController> _logger;
 
-
         public MoviesController(SeriesMvcContext context, ICacheService cacheService, ILogger<MoviesController> logger)
         {
             _context = context;
@@ -39,7 +38,6 @@ namespace SeriesMvc.Controllers
 
             if (cachedMovies != null)
             {
-                _logger.LogInformation("Movies fetched from cache with key {cacheKey}", cacheKey);
                 return View(cachedMovies);
             }
 
@@ -48,22 +46,18 @@ namespace SeriesMvc.Controllers
                 .Include(m => m.MovieCategories).ThenInclude(mc => mc.Category)
                 .ToListAsync();
 
-            // Loglama detayları
             if (!string.IsNullOrEmpty(movieActor))
             {
-                _logger.LogInformation("Filtering movies by actor: {actor}", movieActor);
                 movies = movies.Where(m => m.MovieActors.Any(ma => ma.Actor.Name == movieActor)).ToList();
             }
 
             if (!string.IsNullOrEmpty(movieCategory))
             {
-                _logger.LogInformation("Filtering movies by category: {category}", movieCategory);
                 movies = movies.Where(m => m.MovieCategories.Any(mc => mc.Category.Name == movieCategory)).ToList();
             }
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                _logger.LogInformation("Filtering movies by search string: {search}", searchString);
                 movies = movies.Where(s => s.Title!.ToUpper().Contains(searchString.ToUpper())).ToList();
             }
 
@@ -107,6 +101,7 @@ namespace SeriesMvc.Controllers
                 Categories = movie.MovieCategories.Select(mc => mc.Category.Name).ToList()
             };
 
+            _logger.LogInformation("Movie '{title}' open detail screen successfully. ", movie.Title);
             return View(movieViewModel);
         }
 
@@ -150,7 +145,6 @@ namespace SeriesMvc.Controllers
                     var actor = await _context.Actor.FirstOrDefaultAsync(a => a.Name == trimmedActorName);
                     if (actor == null)
                     {
-                        _logger.LogInformation("Actor '{actorName}' not found, creating new actor.", trimmedActorName);
                         actor = new Actor { Name = trimmedActorName };
                         _context.Actor.Add(actor);
                     }
@@ -186,7 +180,6 @@ namespace SeriesMvc.Controllers
                     var category = await _context.Category.FirstOrDefaultAsync(a => a.Name == trimmedCategoryName);
                     if (category == null)
                     {
-                        _logger.LogInformation("Category '{categoryName}' not found, creating new category.", trimmedCategoryName);
                         category = new Category { Name = trimmedCategoryName };
                         _context.Category.Add(category);
                     }
@@ -243,6 +236,7 @@ namespace SeriesMvc.Controllers
                 Actors = movie.MovieActors.Select(ma => ma.Actor.Name).ToList(),
                 Categories = movie.MovieCategories.Select(mc => mc.Category.Name).ToList()
             };
+            _logger.LogInformation("Movie '{title}' edited successfully. ", movie.Title);
 
             return View(movieViewModel);
         }
@@ -350,6 +344,7 @@ namespace SeriesMvc.Controllers
             }
 
             await _context.SaveChangesAsync();
+            _logger.LogInformation("Movie '{title}' deleted successfully. ", movie.Title);
             return RedirectToAction(nameof(Index));
         }
 

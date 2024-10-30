@@ -1,27 +1,85 @@
+/* Genel font ayarlarý */
 html {
-  font-size: 14px;
+    font-size: 14px; /* Küçük ekranlar için varsayýlan font boyutu */
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px; /* Daha büyük ekranlar için font boyutu */
+    }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+/* Odaklanma durumundaki buton ve form elemanlarý için stil ayarlarý */
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb; /* Odaklanýldýðýnda belirgin hale getir */
 }
 
+/* HTML ve body için temel stil ayarlarý */
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%; /* Sayfanýn tam yükseklik için ayarlanmasý */
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px; /* Alt boþluk býrakýlarak footer için alan saðlanmasý */
 }
 
+/* Tam ekran modu için stil ayarlarý */
 .full-screen {
-    margin-left: 0 !important;
-    width: 100% !important;
+    margin-left: 0 !important; /* Tüm kenar boþluklarýnýn kaldýrýlmasý */
+    width: 100% !important; /* Tam geniþlik ayarý */
+}
+
+/* Ekstra düzenlemeler için öneriler */
+body {
+    background-color: #f4f6f9; /* Genel arka plan rengi */
+    font-family: Arial, sans-serif; /* Genel font ayarý */
+    color: #333; /* Metin rengi */
+}
+
+a {
+    color: #007bff; /* Baðlantý rengi */
+    text-decoration: none; /* Alt çizgi kaldýr */
+}
+
+    a:hover {
+        text-decoration: underline; /* Fare ile üzerine gelindiðinde alt çizgi ekle */
+    }
+
+/* Butonlar için genel stil ayarlarý */
+.btn {
+    padding: 10px 20px; /* Ýç boþluk ayarý */
+    border-radius: 5px; /* Kenar yuvarlama */
+    border: none; /* Kenar çizgisini kaldýr */
+}
+
+.btn-primary {
+    background-color: #007bff; /* Temel buton rengi */
+    color: white; /* Yazý rengi */
+}
+
+/* Duyarlý sidebar tasarýmý */
+.sidebar {
+    background-color: #343a40; /* Sidebar arka plan rengi */
+    color: white; /* Yazý rengi */
+}
+
+    .sidebar .nav-link {
+        color: white; /* Sidebar link rengi */
+    }
+
+        .sidebar .nav-link:hover {
+            background-color: #007bff; /* Fare ile üzerine gelindiðinde arka plan rengi */
+        }
+
+/* Footer stili */
+.main-footer {
+    background-color: #343a40; /* Footer arka plan rengi */
+    color: white; /* Yazý rengi */
+    text-align: center; /* Ortala */
+    padding: 10px 0; /* Dikey boþluk ayarý */
 }
