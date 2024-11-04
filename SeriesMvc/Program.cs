@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Logging;
 using SeriesMvc.Data;
-using SeriesMvc.Services; // RedisCacheService'in yer aldığı ad uzayını ekleyin
+using SeriesMvc.Services; 
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, services, configuration) => configuration
-    .WriteTo.Seq("http://localhost:5341") // Seq sunucusunun adresi
+    .WriteTo.Seq("http://localhost:5341")
     .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day));
 
 builder.Services.AddStackExchangeRedisCache(options =>

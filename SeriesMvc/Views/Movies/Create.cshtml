@@ -18,16 +18,30 @@
             </div>
 
             <div class="form-group">
-                <label for="Actors">Oyuncular (Virgüllerle Ayırın)</label>
-                <input type="text" class="form-control" asp-for="Actors" />
+                <label>Oyuncular</label>
+                <div id="actorContainer">
+                    <div class="actor-wrapper">
+                        <input type="text" class="form-control actor-input" name="Actors[0]" placeholder="Oyuncu adı yazın..." autocomplete="off" />
+                        <div class="suggestions-list" style="display: none;"></div> <!-- Öneri kutusu -->
+                    </div>
+                </div>
                 <span asp-validation-for="Actors" class="text-danger"></span>
             </div>
 
+            <button type="button" id="addActor">Başka Oyuncu Ekle</button>
+
             <div class="form-group">
-                <label for="Categories">Kategoriler (Virgüllerle Ayırın)</label>
-                <input type="text" class="form-control" asp-for="Categories" />
+                <label>Kategoriler</label>
+                <div id="categoryContainer">
+                    <div class="category-wrapper">
+                        <input type="text" class="form-control category-input" name="Categories[0]" placeholder="Kategori adı yazın..." autocomplete="off" />
+                        <div class="suggestions-list" style="display: none;"></div> <!-- Öneri kutusu -->
+                    </div>
+                </div>
                 <span asp-validation-for="Categories" class="text-danger"></span>
             </div>
+
+            <button type="button" id="addCategory">Başka Kategori Ekle</button>
 
 
             <button type="submit" class="btn btn-primary">Create</button>
@@ -40,5 +54,91 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+    let actorCount = 1; // Başlangıç indeksi
+    let categoryCount = 1; // Başlangıç indeksi
+
+    // Yeni oyuncu ekle
+    $("#addActor").on("click", function () {
+        const actorContainer = $("#actorContainer");
+        const wrapper = $('<div class="actor-wrapper"></div>');
+        const input = $('<input type="text" class="form-control actor-input" name="Actors[' + actorCount + ']" placeholder="Oyuncu adı yazın..." autocomplete="off" />');
+        const suggestions = $('<div class="suggestions-list" style="display: none;"></div>');
+
+        wrapper.append(input).append(suggestions);
+        actorContainer.append(wrapper);
+        actorCount++;
+    });
+
+    // Yeni kategori ekle
+    $("#addCategory").on("click", function () {
+        const categoryContainer = $("#categoryContainer");
+        const wrapper = $('<div class="category-wrapper"></div>');
+        const input = $('<input type="text" class="form-control category-input" name="Categories[' + categoryCount + ']" placeholder="Kategori adı yazın..." autocomplete="off" />');
+        const suggestions = $('<div class="suggestions-list" style="display: none;"></div>');
+
+        wrapper.append(input).append(suggestions);
+        categoryContainer.append(wrapper);
+        categoryCount++;
+    });
+
+    // Oyuncu önerileri
+    $("#actorContainer").on("input", ".actor-input", function () {
+        const input = $(this).val();
+        const suggestionsBox = $(this).next(".suggestions-list"); // Doğru öneri kutusunu bul
+        if (input.length > 0) {
+            $.get(`/Movies/GetActors?query=${input}`, function (data) {
+                suggestionsBox.empty();
+                if (data.length > 0) {
+                    data.forEach(actor => {
+                        const suggestionItem = $('<div class="suggestion-item"></div>').text(actor);
+                        suggestionItem.on("click", function () {
+                            $(this).closest(".actor-wrapper").find(".actor-input").val(actor);
+                            suggestionsBox.empty();
+                        });
+                        suggestionsBox.append(suggestionItem);
+                    });
+                    suggestionsBox.show();
+                } else {
+                    suggestionsBox.hide();
+                }
+            });
+        } else {
+            suggestionsBox.hide();
+        }
+    });
+
+    // Kategori önerileri
+    $("#categoryContainer").on("input", ".category-input", function () {
+        const input = $(this).val();
+        const suggestionsBox = $(this).next(".suggestions-list"); // Doğru öneri kutusunu bul
+        if (input.length > 0) {
+            $.get(`/Movies/GetCategories?query=${input}`, function (data) {
+                suggestionsBox.empty();
+                if (data.length > 0) {
+                    data.forEach(category => {
+                        const suggestionItem = $('<div class="suggestion-item"></div>').text(category);
+                        suggestionItem.on("click", function () {
+                            $(this).closest(".category-wrapper").find(".category-input").val(category);
+                            suggestionsBox.empty();
+                        });
+                        suggestionsBox.append(suggestionItem);
+                    });
+                    suggestionsBox.show();
+                } else {
+                    suggestionsBox.hide();
+                }
+            });
+        } else {
+            suggestionsBox.hide();
+        }
+    });
+});
+
+    </script>
 }

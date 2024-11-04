@@ -132,76 +132,43 @@ namespace SeriesMvc.Controllers
             else
             {
                 _logger.LogWarning("Movie with title '{title}' already exists.", model.Title);
+                return RedirectToAction(nameof(Index)); 
             }
 
-            foreach (var actorNames in model.Actors)
+            var actors = model.Actors?.Select(a => a.Trim()).Where(a => !string.IsNullOrEmpty(a)).ToList() ?? new List<string>();
+            foreach (var actorName in actors)
             {
-                var actorList = actorNames.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-                foreach (var actorName in actorList)
+                var actor = await _context.Actor.FirstOrDefaultAsync(a => a.Name == actorName);
+                if (actor == null)
                 {
-                    var trimmedActorName = actorName.Trim();
-
-                    var actor = await _context.Actor.FirstOrDefaultAsync(a => a.Name == trimmedActorName);
-                    if (actor == null)
-                    {
-                        actor = new Actor { Name = trimmedActorName };
-                        _context.Actor.Add(actor);
-                    }
-                    else
-                    {
-                        _logger.LogInformation("Actor '{actorName}' found.", trimmedActorName);
-                    }
-
-                    if (!_context.MovieActor.Any(ma => ma.MovieId == movie.MovieId && ma.ActorId == actor.ActorId))
-                    {
-                        _context.MovieActor.Add(new MovieActor
-                        {
-                            Movie = movie,
-                            Actor = actor
-                        });
-                        _logger.LogInformation("Actor '{actorName}' added to movie '{title}'.", trimmedActorName, model.Title);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Actor '{actorName}' is already associated with movie '{title}'.", trimmedActorName, model.Title);
-                    }
+                    actor = new Actor { Name = actorName };
+                    _context.Actor.Add(actor); 
                 }
+
+                movie.MovieActors.Add(new MovieActor
+                {
+                    Movie = movie,
+                    Actor = actor
+                });
+                _logger.LogInformation("Actor '{actorName}' added to movie '{title}'.", actorName, model.Title);
             }
 
-            foreach (var categoryNames in model.Categories)
+            var categories = model.Categories?.Select(c => c.Trim()).Where(c => !string.IsNullOrEmpty(c)).ToList() ?? new List<string>();
+            foreach (var categoryName in categories)
             {
-                var categoryList = categoryNames.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-                foreach (var categoryName in categoryList)
+                var category = await _context.Category.FirstOrDefaultAsync(c => c.Name == categoryName);
+                if (category == null)
                 {
-                    var trimmedCategoryName = categoryName.Trim();
-
-                    var category = await _context.Category.FirstOrDefaultAsync(a => a.Name == trimmedCategoryName);
-                    if (category == null)
-                    {
-                        category = new Category { Name = trimmedCategoryName };
-                        _context.Category.Add(category);
-                    }
-                    else
-                    {
-                        _logger.LogInformation("Category '{categoryName}' found.", trimmedCategoryName);
-                    }
-
-                    if (!_context.MovieCategory.Any(mc => mc.MovieId == movie.MovieId && mc.CategoryId == category.CategoryId))
-                    {
-                        _context.MovieCategory.Add(new MovieCategory
-                        {
-                            Movie = movie,
-                            Category = category
-                        });
-                        _logger.LogInformation("Category '{categoryName}' added to movie '{title}'.", trimmedCategoryName, model.Title);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Category '{categoryName}' is already associated with movie '{title}'.", trimmedCategoryName, model.Title);
-                    }
+                    category = new Category { Name = categoryName };
+                    _context.Category.Add(category); 
                 }
+
+                movie.MovieCategories.Add(new MovieCategory
+                {
+                    Movie = movie,
+                    Category = category
+                });
+                _logger.LogInformation("Category '{categoryName}' added to movie '{title}'.", categoryName, model.Title);
             }
 
             await _context.SaveChangesAsync();
@@ -209,6 +176,8 @@ namespace SeriesMvc.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+
 
         // GET: Movies/Edit/5
         // GET: Movies/Edit/5
@@ -352,5 +321,29 @@ namespace SeriesMvc.Controllers
         {
             return _context.Movie.Any(e => e.MovieId == id);
         }
+
+        // GET: Movies/GetActors
+        public async Task<IActionResult> GetActors(string query)
+        {
+            var actors = await _context.Actor
+                .Where(a => a.Name.Contains(query))
+                .Select(a => a.Name)
+                .ToListAsync();
+
+            return Json(actors);
+        }
+
+        // GET: Movies/GetCategories
+        public async Task<IActionResult> GetCategories(string query)
+        {
+            var categories = await _context.Category
+                .Where(c => c.Name.Contains(query))
+                .Select(c => c.Name)
+                .ToListAsync();
+
+            return Json(categories);
+        }
+
+
     }
 }
